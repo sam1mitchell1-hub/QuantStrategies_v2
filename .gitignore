@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environments
+.venv/
+venv/
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+notebooks/*.ipynb
+
+# OS files
+.DS_Store
+
+# uv/poetry/other lock files
+poetry.lock 
+quant_strategies.egg-info/ 

@@ -1,0 +1,39 @@
+[project]
+name = "quant_strategies"
+version = "0.1.0"
+description = "A modular Python project for trading strategy research, backtesting, and execution."
+authors = [
+  { name = "Your Name", email = "your.email@example.com" }
+]
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+    "requests",
+    "pandas",
+    "yfinance",
+    "websockets",
+    "PyYAML"
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest",
+    "pandas",
+    "requests"
+]
+notebook = [
+    "jupyter",
+    "pandas",
+    "requests",
+    "marimo",
+    "matplotlib",
+    "yfinance",
+    "websockets",
+    "PyYAML"
+]
+
+[tool.uv]
+# uv-specific config can go here
+
+[tool.setuptools.packages.find]
+include = ["quant_strategies*"] 

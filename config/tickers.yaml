@@ -1,0 +1,43 @@
+# Ticker configurations for QuantStrategies project
+
+# Demo tickers (default for testing)
+demo_tickers:
+  - TSLA
+  - AAPL
+  - PLTR
+
+# Tech stocks
+tech_tickers:
+  - AAPL
+  - MSFT
+  - GOOGL
+  - AMZN
+  - TSLA
+  - NVDA
+  - META
+  - PLTR
+
+# S&P 500 top stocks
+sp500_tickers:
+  - AAPL
+  - MSFT
+  - GOOGL
+  - AMZN
+  - NVDA
+  - META
+  - BRK.B
+  - TSLA
+  - UNH
+  - JNJ
+
+# Default parameters
+defaults:
+  start_date: "2019-01-01"  # 5 years ago
+  data_dir: "data"
+  output_format: "csv"
+
+# Data collection settings
+settings:
+  retry_attempts: 3
+  delay_between_requests: 1  # seconds
+  batch_size: 10  # number of tickers to process in parallel 
