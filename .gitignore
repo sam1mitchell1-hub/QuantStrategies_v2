@@ -1,4 +1,5 @@
 # Python
+autopep8
 __pycache__/
 *.pyc
 *.pyo
@@ -11,10 +12,19 @@ venv/
 # Jupyter Notebook
 .ipynb_checkpoints/
 notebooks/*.ipynb
+notebooks/**/*.ipynb
 
 # OS files
 .DS_Store
 
+# egg-info / build metadata
+*.egg-info/
+
+# Data (exclude all data artifacts)
+data/**
+
 # uv/poetry/other lock files
-poetry.lock 
+poetry.lock
+
+# Project-specific
 quant_strategies.egg-info/ 

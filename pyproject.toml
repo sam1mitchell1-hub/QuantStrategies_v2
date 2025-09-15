@@ -29,7 +29,9 @@ notebook = [
     "matplotlib",
     "yfinance",
     "websockets",
-    "PyYAML"
+    "PyYAML",
+    "plotly",
+    "scipy"
 ]
 
 [tool.uv]

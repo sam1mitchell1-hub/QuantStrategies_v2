@@ -16,16 +16,40 @@ class YFinanceClient:
         df = yf.download(ticker, start=start_date, end=end_date)
         if df.empty:
             return df
+        # Reset index to bring date into a column
         df = df.reset_index()
-        df.rename(columns={
-            'Date': 'date',
-            'Open': 'open',
-            'High': 'high',
-            'Low': 'low',
-            'Close': 'close',
-            'Adj Close': 'adj_close',
-            'Volume': 'volume'
-        }, inplace=True)
+        # Normalize column names to lowercase for consistency
+        df.columns = [str(c).strip() for c in df.columns]
+        # Ensure we have a 'date' column, regardless of how yfinance names it
+        cols_lower = [c.lower() for c in df.columns]
+        df.columns = cols_lower
+        if 'date' not in df.columns:
+            # Common cases: 'index' or unknown first column that is datetime-like
+            if 'index' in df.columns:
+                df = df.rename(columns={'index': 'date'})
+            else:
+                # If first column looks like a datetime, rename it to 'date'
+                first_col = df.columns[0]
+                if pd.api.types.is_datetime64_any_dtype(df[first_col]):
+                    df = df.rename(columns={first_col: 'date'})
+                else:
+                    # As a fallback, try 'datetime' or 'timestamp'
+                    for cand in ('datetime', 'timestamp', 'Date'):
+                        if cand.lower() in df.columns:
+                            df = df.rename(columns={cand.lower(): 'date'})
+                            break
+        # Map adjusted close naming
+        rename_map = {
+            'open': 'open',
+            'high': 'high',
+            'low': 'low',
+            'close': 'close',
+            'adj close': 'adj_close',
+            'adj_close': 'adj_close',
+            'volume': 'volume',
+        }
+        # Apply mapping where keys exist
+        df = df.rename(columns={k: v for k, v in rename_map.items() if k in df.columns and k != v})
         return df
 
     def get_daily_prices_from_start(self, ticker: str, start_date: str) -> pd.DataFrame:
@@ -76,8 +100,8 @@ class YFinanceClient:
         df.to_csv(output_path, index=False)
         
         print(f"Saved {len(df)} rows of {ticker} data to: {output_path}")
-        print(f"Date range: {df['date'].min()} to {df['date'].max()}")
-        print(f"File size: {os.path.getsize(output_path) / 1024:.1f} KB")
+        if 'date' in df.columns:
+            print(f"Date range: {df['date'].min()} to {df['date'].max()}")
         
         return output_path
 
@@ -121,7 +145,7 @@ class YFinanceClient:
         df.to_csv(output_path, index=False)
         
         print(f"Saved {len(df)} rows of {ticker} data to: {output_path}")
-        print(f"Date range: {df['date'].min()} to {df['date'].max()}")
-        print(f"File size: {os.path.getsize(output_path) / 1024:.1f} KB")
+        if 'date' in df.columns:
+            print(f"Date range: {df['date'].min()} to {df['date'].max()}")
         
         return output_path 
