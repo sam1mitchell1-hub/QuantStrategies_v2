@@ -1,0 +1,2 @@
+# Run daily at 07:05 UTC
+5 7 * * * /bin/sh -c 'python /app/scripts/fetch_options.py --tickers SPY QQQ --num-expiries 12 >> /app/logs/fetch_options.log 2>&1'
