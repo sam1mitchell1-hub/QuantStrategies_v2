@@ -11,6 +11,29 @@ A modular Python project for developing, backtesting, and executing trading stra
 
 ## Getting Started
 
-1. Install dependencies with `uv pip install -r requirements.txt` or via `pyproject.toml`.
-2. Use the `scripts/` directory to run backtests or live trading.
-3. Develop and test strategies in `notebooks/` and move logic to modules as needed. 
+See the full docs in `docs/`:
+
+- Overview: docs/overview.md
+- Installation: docs/installation.md
+- Quickstart: docs/quickstart.md
+- Data: docs/data.md
+- Strategies: docs/strategies.md
+- Backtesting: docs/backtesting.md
+- Options: docs/options.md
+- Scripts: docs/scripts.md
+- Configuration: docs/configuration.md
+- API Reference: docs/api.md
+- Development: docs/development.md
+
+Quick install:
+
+```bash
+pip install .[notebook]
+```
+
+Then try:
+
+```bash
+python scripts/get_data.py --tickers TSLA AAPL PLTR --start-date 2019-01-01 --data-dir data
+python scripts/test_strategy.py
+```
