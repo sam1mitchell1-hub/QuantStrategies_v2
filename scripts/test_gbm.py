@@ -176,7 +176,7 @@ def plot_results(data, gbm, paths, time_steps, initial_value):
     plt.grid(True, alpha=0.3)
     
     plt.tight_layout()
-    plt.savefig('gbm_test_results.png', dpi=300, bbox_inches='tight')
+    plt.savefig('output/gbm_test_results.png', dpi=300, bbox_inches='tight')
     plt.show()
 
 
@@ -199,7 +199,7 @@ def main():
         plot_results(data, gbm, paths, time_steps, initial_value)
         
         print("\n=== Test completed successfully! ===")
-        print("Results saved to 'gbm_test_results.png'")
+        print("Results saved to 'output/gbm_test_results.png'")
         
     except Exception as e:
         print(f"Test failed with error: {e}")

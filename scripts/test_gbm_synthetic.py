@@ -197,7 +197,7 @@ def plot_results(data, gbm, paths, time_steps, initial_value, true_mu, true_sigm
     plt.grid(True, alpha=0.3)
     
     plt.tight_layout()
-    plt.savefig('gbm_synthetic_test_results.png', dpi=300, bbox_inches='tight')
+    plt.savefig('output/gbm_synthetic_test_results.png', dpi=300, bbox_inches='tight')
     plt.show()
 
 
@@ -217,7 +217,7 @@ def main():
         plot_results(data, gbm, paths, time_steps, initial_value, true_mu, true_sigma)
         
         print("\n=== Test completed successfully! ===")
-        print("Results saved to 'gbm_synthetic_test_results.png'")
+        print("Results saved to 'output/gbm_synthetic_test_results.png'")
         print("\nThe GBM implementation is working correctly!")
         print("The yfinance issue appears to be external (Yahoo Finance API problem).")
         
