@@ -12,7 +12,9 @@ dependencies = [
     "pandas",
     "yfinance",
     "websockets",
-    "PyYAML"
+    "PyYAML",
+    "scipy",
+    "numpy"
 ]
 
 [project.optional-dependencies]
@@ -38,4 +40,4 @@ notebook = [
 # uv-specific config can go here
 
 [tool.setuptools.packages.find]
-include = ["quant_strategies*"] 
+include = ["quant_strategies*", "stochastic*"] 

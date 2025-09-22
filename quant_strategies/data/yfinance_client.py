@@ -16,13 +16,19 @@ class YFinanceClient:
         df = yf.download(ticker, start=start_date, end=end_date)
         if df.empty:
             return df
+        
+        # Handle MultiIndex columns from yfinance
+        if isinstance(df.columns, pd.MultiIndex):
+            # Flatten MultiIndex columns by taking the first level (OHLCV names)
+            df.columns = df.columns.get_level_values(0)
+        
         # Reset index to bring date into a column
         df = df.reset_index()
+        
         # Normalize column names to lowercase for consistency
-        df.columns = [str(c).strip() for c in df.columns]
+        df.columns = [str(c).strip().lower() for c in df.columns]
+        
         # Ensure we have a 'date' column, regardless of how yfinance names it
-        cols_lower = [c.lower() for c in df.columns]
-        df.columns = cols_lower
         if 'date' not in df.columns:
             # Common cases: 'index' or unknown first column that is datetime-like
             if 'index' in df.columns:
@@ -38,7 +44,8 @@ class YFinanceClient:
                         if cand.lower() in df.columns:
                             df = df.rename(columns={cand.lower(): 'date'})
                             break
-        # Map adjusted close naming
+        
+        # Map adjusted close naming - handle both 'adj close' and 'adj_close'
         rename_map = {
             'open': 'open',
             'high': 'high',
@@ -50,6 +57,7 @@ class YFinanceClient:
         }
         # Apply mapping where keys exist
         df = df.rename(columns={k: v for k, v in rename_map.items() if k in df.columns and k != v})
+        
         return df
 
     def get_daily_prices_from_start(self, ticker: str, start_date: str) -> pd.DataFrame:
