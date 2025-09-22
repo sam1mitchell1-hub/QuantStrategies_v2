@@ -27,4 +27,8 @@ data/**
 poetry.lock
 
 # Project-specific
-quant_strategies.egg-info/ 
+quant_strategies.egg-info/
+
+# Generated output files
+output/
+*.png 
