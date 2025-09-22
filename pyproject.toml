@@ -21,7 +21,10 @@ dependencies = [
 test = [
     "pytest",
     "pandas",
-    "requests"
+    "requests",
+    "matplotlib",
+    "scipy",
+    "numpy"
 ]
 notebook = [
     "jupyter",
