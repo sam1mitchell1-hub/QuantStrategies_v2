@@ -43,4 +43,4 @@ notebook = [
 # uv-specific config can go here
 
 [tool.setuptools.packages.find]
-include = ["quant_strategies*", "stochastic*"] 
+include = ["quant_strategies*", "stochastic*", "pde*"] 
