@@ -43,30 +43,12 @@ def analytical_black_scholes(S, K, T, r, sigma, option_type='call'):
     return price
 
 
-def test_basic_functionality():
-    """Test basic solver functionality."""
+def test_basic_functionality(solver_params):
+    """Test basic solver functionality with given parameters."""
     print("=== Testing Basic Functionality ===")
     
-    # Test parameters
-    S0 = 100.0
-    K = 100.0
-    T = 1.0
-    r = 0.05
-    sigma = 0.2
-    option_type = 'call'
-    
-    # Create solver
-    solver = BlackScholesCNSolver(
-        S_min=0.0,
-        S_max=4*K,  # 4x strike as discussed
-        T=T,
-        r=r,
-        sigma=sigma,
-        K=K,
-        option_type=option_type,
-        N_S=100,
-        N_T=100
-    )
+    # Create solver with provided parameters
+    solver = BlackScholesCNSolver(**solver_params)
     
     # Setup and solve
     solver.setup_grid()
@@ -80,17 +62,17 @@ def test_basic_functionality():
     return solver
 
 
-def test_option_pricing(solver):
+def test_option_pricing(solver, test_points=None):
     """Test option pricing at various underlying prices."""
     print("\n=== Testing Option Pricing ===")
     
-    # Test points
-    S_test = [80, 90, 100, 110, 120]
+    if test_points is None:
+        test_points = [80, 90, 100, 110, 120]
     
     print(f"{'S':>8} {'FD Price':>12} {'Analytical':>12} {'Error':>10} {'Error %':>10}")
     print("-" * 60)
     
-    for S in S_test:
+    for S in test_points:
         # Finite difference price
         fd_price = solver.get_option_price(S, t=0.0)
         
@@ -106,11 +88,10 @@ def test_option_pricing(solver):
         print(f"{S:8.1f} {fd_price:12.6f} {analytical_price:12.6f} {error:10.6f} {error_pct:10.2f}%")
 
 
-def test_greeks(solver):
+def test_greeks(solver, S_test=100.0):
     """Test Greeks calculation."""
-    print("\n=== Testing Greeks Calculation ===")
+    print(f"\n=== Testing Greeks Calculation ===")
     
-    S_test = 100.0
     greeks = solver.get_greeks(S_test, t=0.0)
     
     print(f"Greeks at S = {S_test}:")
@@ -118,35 +99,31 @@ def test_greeks(solver):
         print(f"  {greek.capitalize()}: {value:.6f}")
 
 
-def test_put_option():
-    """Test put option pricing."""
-    print("\n=== Testing Put Option ===")
+def test_put_call_parity(solver_params, S_test=100.0):
+    """Test put-call parity relationship."""
+    print("\n=== Testing Put-Call Parity ===")
     
-    # Create put option solver
-    put_solver = BlackScholesCNSolver(
-        S_min=0.0,
-        S_max=400.0,
-        T=1.0,
-        r=0.05,
-        sigma=0.2,
-        K=100.0,
-        option_type='put',
-        N_S=100,
-        N_T=100
-    )
+    # Create call and put solvers with same parameters
+    call_params = solver_params.copy()
+    call_params['option_type'] = 'call'
+    call_solver = BlackScholesCNSolver(**call_params)
     
+    put_params = solver_params.copy()
+    put_params['option_type'] = 'put'
+    put_solver = BlackScholesCNSolver(**put_params)
+    
+    # Setup and solve both
+    call_solver.setup_grid()
     put_solver.setup_grid()
+    call_solver.solve()
     put_solver.solve()
     
-    # Test put-call parity
-    S_test = 100.0
-    
-    call_price = solver.get_option_price(S_test, t=0.0)
+    # Test put-call parity: C - P = S - K*exp(-r*T)
+    call_price = call_solver.get_option_price(S_test, t=0.0)
     put_price = put_solver.get_option_price(S_test, t=0.0)
     
-    # Put-call parity: C - P = S - K*exp(-r*T)
     lhs = call_price - put_price
-    rhs = S_test - put_solver.K * np.exp(-put_solver.r * put_solver.T)
+    rhs = S_test - call_solver.K * np.exp(-call_solver.r * call_solver.T)
     
     print(f"Put-Call Parity Test:")
     print(f"  Call price: {call_price:.6f}")
@@ -154,9 +131,11 @@ def test_put_option():
     print(f"  C - P: {lhs:.6f}")
     print(f"  S - K*exp(-r*T): {rhs:.6f}")
     print(f"  Difference: {abs(lhs - rhs):.6f}")
+    
+    return call_solver, put_solver
 
 
-def plot_solution_surface(solver):
+def plot_solution_surface(solver, save_plot=True):
     """Plot the solution surface."""
     print("\n=== Creating Solution Surface Plot ===")
     
@@ -216,32 +195,68 @@ def plot_solution_surface(solver):
     plt.grid(True, alpha=0.3)
     
     plt.tight_layout()
-    plt.savefig('output/black_scholes_cn_test_results.png', dpi=300, bbox_inches='tight')
+    
+    if save_plot:
+        plt.savefig('output/black_scholes_cn_test_results.png', dpi=300, bbox_inches='tight')
+        print("Results saved to 'output/black_scholes_cn_test_results.png'")
+    
     plt.show()
 
 
 def main():
-    """Main test function."""
+    """Main test function with configurable parameters."""
     print("=== Black-Scholes Crank-Nicolson Solver Test ===\n")
+    
+    # =============================================================================
+    # CONFIGURABLE PARAMETERS - Modify these to test different settings
+    # =============================================================================
+    
+    # Solver parameters - modify these to experiment with different settings
+    solver_params = {
+        'S_min': 0.0,
+        'S_max': 400.0,  # 4 × K
+        'T': 1.0,        # Time to expiration
+        'r': 0.05,       # Risk-free rate
+        'sigma': 0.2,    # Volatility
+        'K': 100.0,      # Strike price
+        'option_type': 'call',
+        'N_S': 100,      # Spatial grid points
+        'N_T': 100       # Time steps
+    }
+    
+    # Test points for option pricing comparison
+    test_points = [80, 90, 100, 110, 120]
+    
+    # Point for Greeks calculation
+    greeks_S = 100.0
+    
+    # Point for put-call parity test
+    parity_S = 100.0
+    
+    # Whether to save plots
+    save_plots = True
+    
+    # =============================================================================
+    # END CONFIGURABLE PARAMETERS
+    # =============================================================================
     
     try:
         # Test basic functionality
-        solver = test_basic_functionality()
+        solver = test_basic_functionality(solver_params)
         
         # Test option pricing
-        test_option_pricing(solver)
+        test_option_pricing(solver, test_points)
         
         # Test Greeks
-        test_greeks(solver)
+        test_greeks(solver, greeks_S)
         
-        # Test put option
-        test_put_option()
+        # Test put-call parity
+        call_solver, put_solver = test_put_call_parity(solver_params, parity_S)
         
         # Create visualizations
-        plot_solution_surface(solver)
+        plot_solution_surface(solver, save_plots)
         
         print("\n=== All Tests Completed Successfully! ===")
-        print("Results saved to 'output/black_scholes_cn_test_results.png'")
         
     except Exception as e:
         print(f"Test failed with error: {e}")
