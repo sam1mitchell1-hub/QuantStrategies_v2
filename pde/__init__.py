@@ -11,5 +11,6 @@ Main Components:
 """
 
 from .solvers.black_scholes_cn import BlackScholesCNSolver
+from .solvers.black_scholes_cn_rannacher import BlackScholesCNRannacherSolver
 
-__all__ = ['BlackScholesCNSolver']
+__all__ = ['BlackScholesCNSolver', 'BlackScholesCNRannacherSolver']

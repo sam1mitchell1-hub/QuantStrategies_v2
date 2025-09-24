@@ -1,8 +1,8 @@
 """
-Crank-Nicolson solver for the Black-Scholes PDE in log-space.
+Crank-Nicolson solver with Rannacher smoothing for the Black-Scholes PDE.
 
-This module implements a finite difference solver for the Black-Scholes equation
-using the Crank-Nicolson scheme in log-space for improved numerical stability.
+This solver uses the Crank-Nicolson scheme with Rannacher smoothing in the first
+few time steps to improve accuracy near the payoff discontinuity.
 """
 
 import numpy as np
@@ -12,14 +12,13 @@ from ..utils.grid_utils import create_log_grid, create_time_grid
 from ..utils.matrix_utils import thomas_algorithm
 
 
-class BlackScholesCNSolver(BlackScholesSolver):
+class BlackScholesCNRannacherSolver(BlackScholesSolver):
     """
-    Crank-Nicolson solver for the Black-Scholes PDE in log-space.
+    Crank-Nicolson solver with Rannacher smoothing for the Black-Scholes PDE.
     
-    The Black-Scholes PDE in log-space (x = ln(S)) is:
-    ∂V/∂t + ½σ²(∂²V/∂x²) + (r - ½σ²)(∂V/∂x) - rV = 0
-    
-    This solver uses the Crank-Nicolson scheme for good stability and accuracy.
+    The Rannacher smoothing technique uses implicit Euler for the first few time steps
+    to smooth out the discontinuity at the payoff, then switches to Crank-Nicolson.
+    This improves accuracy near the strike price.
     """
     
     def __init__(self, 
@@ -31,9 +30,10 @@ class BlackScholesCNSolver(BlackScholesSolver):
                  K: float = 100.0,
                  option_type: str = 'call',
                  N_S: int = 100,
-                 N_T: int = 100):
+                 N_T: int = 100,
+                 rannacher_steps: int = 4):
         """
-        Initialize the Crank-Nicolson Black-Scholes solver.
+        Initialize the Crank-Nicolson solver with Rannacher smoothing.
         
         Args:
             S_min: Minimum underlying price (default: 0.0)
@@ -45,16 +45,19 @@ class BlackScholesCNSolver(BlackScholesSolver):
             option_type: 'call' or 'put' (default: 'call')
             N_S: Number of spatial grid points (default: 100)
             N_T: Number of time steps (default: 100)
+            rannacher_steps: Number of Rannacher smoothing steps (default: 4)
         """
         # Set default S_max if not provided
         if S_max is None:
             S_max = 4 * K
             
         super().__init__(S_min, S_max, T, r, sigma, K, option_type, N_S, N_T, 
-                        "Black-Scholes Crank-Nicolson Solver")
+                        "Black-Scholes Crank-Nicolson with Rannacher Smoothing")
         
-        # Crank-Nicolson specific parameters
-        self.theta = 0.5  # Crank-Nicolson parameter
+        # Rannacher smoothing parameters
+        self.rannacher_steps = rannacher_steps
+        self.theta_rannacher = 1.0  # Implicit Euler for Rannacher steps
+        self.theta_cn = 0.5  # Crank-Nicolson for remaining steps
         
         # Grid and solution arrays
         self.x_grid = None
@@ -86,7 +89,8 @@ class BlackScholesCNSolver(BlackScholesSolver):
             'dx': self.dx,
             'dt': self.dt,
             'x_min': self.x_grid[0],
-            'x_max': self.x_grid[-1]
+            'x_max': self.x_grid[-1],
+            'rannacher_steps': self.rannacher_steps
         }
         
     def apply_boundary_conditions(self) -> None:
@@ -100,44 +104,45 @@ class BlackScholesCNSolver(BlackScholesSolver):
         # Set terminal condition (payoff at expiration)
         self.solution[-1, :] = self.get_payoff(self.S_grid)
         
-    def _get_crank_nicolson_coefficients(self) -> tuple:
+    def _get_coefficients(self, theta: float) -> tuple:
         """
-        Get the coefficients for the Crank-Nicolson scheme.
+        Get the coefficients for the finite difference scheme.
         
+        Args:
+            theta: Scheme parameter (1.0 for implicit Euler, 0.5 for Crank-Nicolson)
+            
         Returns:
             Tuple of (a, b, c) coefficients for the tridiagonal system
         """
-        # Crank-Nicolson coefficients in log-space
-        # The PDE is: ∂V/∂t + ½σ²(∂²V/∂x²) + (r - ½σ²)(∂V/∂x) - rV = 0
-        
         # Spatial derivatives coefficients
         alpha = 0.5 * self.sigma**2 / (self.dx**2)
         beta = (self.r - 0.5 * self.sigma**2) / (2 * self.dx)
         gamma = self.r
         
-        # Crank-Nicolson coefficients
+        # Finite difference coefficients
         # For the tridiagonal system: a[i]*V[i-1] + b[i]*V[i] + c[i]*V[i+1] = d[i]
         
         # Lower diagonal (a[i] for i = 1, ..., N_S-1)
         a = np.zeros(self.N_S)
-        a[1:] = -self.theta * self.dt * (alpha - beta)  # Skip first element (boundary)
+        a[1:] = -theta * self.dt * (alpha - beta)  # Skip first element (boundary)
         
         # Main diagonal (b[i] for i = 0, ..., N_S)
         b = np.ones(self.N_S + 1)
-        b[1:-1] = 1 + self.theta * self.dt * (2 * alpha + gamma)
+        b[1:-1] = 1 + theta * self.dt * (2 * alpha + gamma)
         
         # Upper diagonal (c[i] for i = 0, ..., N_S-1)
         c = np.zeros(self.N_S)
-        c[:-1] = -self.theta * self.dt * (alpha + beta)
+        c[:-1] = -theta * self.dt * (alpha + beta)
         
         return a, b, c
         
-    def _get_rhs_vector(self, V_old: np.ndarray) -> np.ndarray:
+    def _get_rhs_vector(self, V_old: np.ndarray, theta: float) -> np.ndarray:
         """
-        Get the right-hand side vector for the Crank-Nicolson scheme.
+        Get the right-hand side vector for the finite difference scheme.
         
         Args:
             V_old: Solution at previous time step
+            theta: Scheme parameter
             
         Returns:
             Right-hand side vector
@@ -152,8 +157,8 @@ class BlackScholesCNSolver(BlackScholesSolver):
         
         # Interior points (i = 1, ..., N_S-1)
         for i in range(1, self.N_S):
-            # Explicit part of Crank-Nicolson
-            explicit_term = (1 - self.theta) * self.dt * (
+            # Explicit part of the scheme
+            explicit_term = (1 - theta) * self.dt * (
                 alpha * (V_old[i-1] - 2*V_old[i] + V_old[i+1]) +
                 beta * (V_old[i+1] - V_old[i-1]) -
                 gamma * V_old[i]
@@ -183,7 +188,7 @@ class BlackScholesCNSolver(BlackScholesSolver):
         
     def solve(self) -> np.ndarray:
         """
-        Solve the Black-Scholes PDE using Crank-Nicolson scheme.
+        Solve the Black-Scholes PDE using Crank-Nicolson with Rannacher smoothing.
         
         Returns:
             Solution array (time x space)
@@ -194,15 +199,25 @@ class BlackScholesCNSolver(BlackScholesSolver):
         # Apply terminal condition
         self.apply_initial_conditions()
         
-        # Get Crank-Nicolson coefficients
-        a, b, c = self._get_crank_nicolson_coefficients()
-        
         # Time stepping (backwards from expiration to present)
         for n in range(self.N_T - 1, -1, -1):
             t = self.t_grid[n]
             
+            # Determine which scheme to use
+            if n >= self.N_T - self.rannacher_steps:
+                # Use Rannacher smoothing (implicit Euler) for first few steps
+                theta = self.theta_rannacher
+                scheme_name = "Rannacher (Implicit Euler)"
+            else:
+                # Use Crank-Nicolson for remaining steps
+                theta = self.theta_cn
+                scheme_name = "Crank-Nicolson"
+            
+            # Get coefficients for the chosen scheme
+            a, b, c = self._get_coefficients(theta)
+            
             # Get RHS vector
-            d = self._get_rhs_vector(self.solution[n + 1])
+            d = self._get_rhs_vector(self.solution[n + 1], theta)
             
             # Apply boundary conditions
             d = self._apply_boundary_conditions_to_rhs(d, t)
@@ -277,4 +292,19 @@ class BlackScholesCNSolver(BlackScholesSolver):
             'S_grid': self.S_grid,
             't_grid': self.t_grid,
             'solution': self.solution
+        }
+        
+    def get_rannacher_info(self) -> Dict[str, Any]:
+        """
+        Get information about the Rannacher smoothing.
+        
+        Returns:
+            Dictionary containing Rannacher smoothing information
+        """
+        return {
+            'rannacher_steps': self.rannacher_steps,
+            'theta_rannacher': self.theta_rannacher,
+            'theta_cn': self.theta_cn,
+            'rannacher_time_steps': list(range(self.N_T - self.rannacher_steps, self.N_T)),
+            'cn_time_steps': list(range(0, self.N_T - self.rannacher_steps))
         }
