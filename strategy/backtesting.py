@@ -190,7 +190,19 @@ class Backtester:
         """Process trading decision for a specific time."""
         # Get forecast
         features = decision_data['features'].to_frame().T
-        forecast = forecaster.predict(features)
+        forecast_results = forecaster.predict(features)
+        
+        # Convert to dictionary format
+        forecast = {
+            'expected_returns': 0.0,  # Default
+            'probabilities': 0.5      # Default
+        }
+        
+        if forecast_results.probabilities is not None:
+            forecast['probabilities'] = forecast_results.probabilities[0]
+            # Convert probability to expected return
+            confidence = abs(forecast_results.probabilities[0] - 0.5) * 2
+            forecast['expected_returns'] = (forecast_results.probabilities[0] - 0.5) * confidence * 0.02
         
         # Check if we should trade
         if abs(forecast.get('expected_returns', 0)) < 0.001:  # Minimum threshold

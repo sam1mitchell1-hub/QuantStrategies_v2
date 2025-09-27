@@ -91,6 +91,9 @@ class FeatureBuilder:
             regime_features
         ], axis=1)
         
+        # Remove duplicate columns (keep first occurrence)
+        all_features = all_features.loc[:, ~all_features.columns.duplicated()]
+        
         # Remove any rows with all NaN values
         all_features = all_features.dropna(how='all')
         
@@ -163,7 +166,7 @@ class FeatureBuilder:
             features[f'rv_{window}d'] = rv
             
             # RV percentiles
-            rv_percentile = rv.rolling(252).rank(pct=True)
+            rv_percentile = rv.rolling(252).apply(lambda x: x.rank(pct=True).iloc[-1], raw=False)
             features[f'rv_{window}d_percentile'] = rv_percentile
         
         # Bipower variation (more robust to jumps)
@@ -185,7 +188,7 @@ class FeatureBuilder:
         features['vol_of_vol'] = rv_5d.rolling(20).std()
         
         # Volatility regime
-        rv_20d_percentile = rv_20d.rolling(252).rank(pct=True)
+        rv_20d_percentile = rv_20d.rolling(252).apply(lambda x: x.rank(pct=True).iloc[-1], raw=False)
         features['low_vol_regime'] = (rv_20d_percentile < self.config.features.regime_thresholds['low_vol']).astype(int)
         features['high_vol_regime'] = (rv_20d_percentile > self.config.features.regime_thresholds['high_vol']).astype(int)
         features['extreme_vol_regime'] = (rv_20d_percentile > self.config.features.regime_thresholds['extreme_vol']).astype(int)
@@ -210,7 +213,7 @@ class FeatureBuilder:
             features['iv_atm_20d_ma'] = features['iv_atm'].rolling(20).mean()
             
             # IV percentiles
-            features['iv_atm_percentile'] = features['iv_atm'].rolling(252).rank(pct=True)
+            features['iv_atm_percentile'] = features['iv_atm'].rolling(252).apply(lambda x: x.rank(pct=True).iloc[-1], raw=False)
         
         # IV skew features
         for strike_pct in self.config.features.iv_skew_strikes:
@@ -231,7 +234,7 @@ class FeatureBuilder:
         # IV-RV gap (Volatility Risk Premium)
         if 'iv_atm' in features.columns and 'rv_20d' in features.columns:
             features['vrp'] = features['iv_atm'] - features['rv_20d']
-            features['vrp_percentile'] = features['vrp'].rolling(252).rank(pct=True)
+            features['vrp_percentile'] = features['vrp'].rolling(252).apply(lambda x: x.rank(pct=True).iloc[-1], raw=False)
         
         # IV surface curvature (approximated)
         if all(f'skew_{strike:.0%}' in features.columns for strike in [0.95, 1.0, 1.05]):
@@ -255,7 +258,7 @@ class FeatureBuilder:
                 features['vix'] = vix_aligned['vix']
                 features['vix_5d_ma'] = features['vix'].rolling(5).mean()
                 features['vix_20d_ma'] = features['vix'].rolling(20).mean()
-                features['vix_percentile'] = features['vix'].rolling(252).rank(pct=True)
+                features['vix_percentile'] = features['vix'].rolling(252).apply(lambda x: x.rank(pct=True).iloc[-1], raw=False)
                 
                 # VIX term structure (if available)
                 if 'vix_9d' in vix_aligned.columns and 'vix_30d' in vix_aligned.columns:
@@ -280,7 +283,7 @@ class FeatureBuilder:
             if 'credit_spread' in credit_aligned.columns:
                 features['credit_spread'] = credit_aligned['credit_spread']
                 features['credit_spread_change'] = features['credit_spread'].diff()
-                features['credit_spread_percentile'] = features['credit_spread'].rolling(252).rank(pct=True)
+                features['credit_spread_percentile'] = features['credit_spread'].rolling(252).apply(lambda x: x.rank(pct=True).iloc[-1], raw=False)
         
         return features
     
@@ -302,7 +305,7 @@ class FeatureBuilder:
             
             # Volume percentiles
             volume_percentile_window = self.config.features.volume_percentile_window
-            features['volume_percentile'] = features['volume'].rolling(volume_percentile_window).rank(pct=True)
+            features['volume_percentile'] = features['volume'].rolling(volume_percentile_window).apply(lambda x: x.rank(pct=True).iloc[-1], raw=False)
         
         # Options liquidity features (if available)
         if not options_data.empty:
@@ -310,11 +313,11 @@ class FeatureBuilder:
             
             if 'avg_bid_ask_spread' in options_aligned.columns:
                 features['options_spread'] = options_aligned['avg_bid_ask_spread']
-                features['options_spread_percentile'] = features['options_spread'].rolling(252).rank(pct=True)
+                features['options_spread_percentile'] = features['options_spread'].rolling(252).apply(lambda x: x.rank(pct=True).iloc[-1], raw=False)
             
             if 'total_oi' in options_aligned.columns:
                 features['options_oi'] = options_aligned['total_oi']
-                features['options_oi_percentile'] = features['options_oi'].rolling(252).rank(pct=True)
+                features['options_oi_percentile'] = features['options_oi'].rolling(252).apply(lambda x: x.rank(pct=True).iloc[-1], raw=False)
         
         return features
     
@@ -328,12 +331,12 @@ class FeatureBuilder:
         # RV percentiles for different windows
         for window in self.config.features.rv_percentile_windows:
             rv = returns.rolling(window).std() * np.sqrt(252)
-            rv_percentile = rv.rolling(252).rank(pct=True)
+            rv_percentile = rv.rolling(252).apply(lambda x: x.rank(pct=True).iloc[-1], raw=False)
             features[f'rv_{window}d_percentile'] = rv_percentile
         
         # Market regime dummies
         rv_20d = returns.rolling(20).std() * np.sqrt(252)
-        rv_20d_percentile = rv_20d.rolling(252).rank(pct=True)
+        rv_20d_percentile = rv_20d.rolling(252).apply(lambda x: x.rank(pct=True).iloc[-1], raw=False)
         
         features['low_vol_regime'] = (rv_20d_percentile < 0.25).astype(int)
         features['normal_vol_regime'] = ((rv_20d_percentile >= 0.25) & (rv_20d_percentile <= 0.75)).astype(int)

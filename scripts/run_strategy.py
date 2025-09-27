@@ -213,9 +213,12 @@ def generate_reports(backtest_results, forecaster, feature_builder):
     # Feature importance
     if hasattr(forecaster, 'model') and forecaster.model is not None:
         print(f"\nTop 10 Most Important Features:")
-        importance_df = forecaster.get_feature_importance()
-        for i, (_, row) in enumerate(importance_df.head(10).iterrows()):
-            print(f"  {i+1:2d}. {row['feature']}: {row['importance']:.4f}")
+        try:
+            importance_df = forecaster.get_feature_importance()
+            for i, (_, row) in enumerate(importance_df.head(10).iterrows()):
+                print(f"  {i+1:2d}. {row['feature']}: {row['importance']:.4f}")
+        except Exception as e:
+            print(f"  Feature importance not available: {e}")
     
     # Create performance plots
     create_performance_plots(backtest_results)
@@ -315,9 +318,12 @@ def save_results(backtest_results, forecaster, feature_builder):
     
     # Save feature importance
     if hasattr(forecaster, 'model') and forecaster.model is not None:
-        importance_df = forecaster.get_feature_importance()
-        importance_df.to_csv('output/feature_importance.csv', index=False)
-        print("Feature importance saved to output/feature_importance.csv")
+        try:
+            importance_df = forecaster.get_feature_importance()
+            importance_df.to_csv('output/feature_importance.csv', index=False)
+            print("Feature importance saved to output/feature_importance.csv")
+        except Exception as e:
+            print(f"Feature importance not available: {e}")
     
     print("Results saved successfully!")
 

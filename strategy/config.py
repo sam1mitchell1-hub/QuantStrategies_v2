@@ -20,7 +20,7 @@ class MarketConfig:
     """Market-specific configuration."""
     # Trading horizon and timing
     trading_horizon_days: int = 5  # h: trading horizon in days
-    decision_time: time = time(15, 30)  # Daily decision time (15:30 London)
+    decision_time: str = "15:30:00"  # Daily decision time (15:30 London)
     
     # Target underlyings
     underlyings: List[str] = field(default_factory=lambda: ['SPY', 'QQQ', 'IWM'])
@@ -269,7 +269,14 @@ class StrategyConfig:
         # Create decision times
         schedule = []
         for date in trading_days:
-            decision_time = datetime.combine(date.date(), self.market.decision_time)
+            # Parse decision time string
+            decision_time_str = self.market.decision_time
+            if isinstance(decision_time_str, str):
+                hour, minute, second = map(int, decision_time_str.split(':'))
+                decision_time = datetime.combine(date.date(), time(hour, minute, second))
+            else:
+                decision_time = datetime.combine(date.date(), decision_time_str)
+            
             schedule.append({
                 'date': date.date(),
                 'decision_time': decision_time,

@@ -67,11 +67,13 @@ class GBTForecaster:
         self.feature_names = None
         self.is_trained = False
         
-        # Validate model availability
+        # Check model availability and provide fallback
         if config.model.model_type == 'lightgbm' and not LIGHTGBM_AVAILABLE:
-            raise ImportError("LightGBM not available")
+            print("Warning: LightGBM not available, falling back to scikit-learn")
+            self.config.model.model_type = 'sklearn'
         if config.model.model_type == 'catboost' and not CATBOOST_AVAILABLE:
-            raise ImportError("CatBoost not available")
+            print("Warning: CatBoost not available, falling back to scikit-learn")
+            self.config.model.model_type = 'sklearn'
         if not SKLEARN_AVAILABLE:
             raise ImportError("Scikit-learn not available")
     
@@ -117,6 +119,12 @@ class GBTForecaster:
                 early_stopping_rounds=50,
                 verbose=False
             )
+        elif self.config.model.model_type == 'sklearn':
+            # Scikit-learn models
+            if sample_weight_clean is not None:
+                self.model.fit(X_clean, y_clean, sample_weight=sample_weight_clean)
+            else:
+                self.model.fit(X_clean, y_clean)
         
         # Get predictions
         if self.config.model.objective == 'classification':
@@ -256,6 +264,12 @@ class GBTForecaster:
                     early_stopping_rounds=50,
                     verbose=False
                 )
+            elif self.config.model.model_type == 'sklearn':
+                # Scikit-learn models
+                if sw_train is not None:
+                    model.fit(X_train, y_train, sample_weight=sw_train)
+                else:
+                    model.fit(X_train, y_train)
             
             # Make predictions
             if self.config.model.objective == 'classification':
@@ -318,6 +332,15 @@ class GBTForecaster:
                 return cb.CatBoostClassifier(verbose=False, random_seed=42)
             else:
                 return cb.CatBoostRegressor(verbose=False, random_seed=42)
+        elif self.config.model.model_type == 'sklearn':
+            # Fallback to scikit-learn models
+            from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
+            from sklearn.linear_model import LogisticRegression, LinearRegression
+            
+            if self.config.model.objective == 'classification':
+                return RandomForestClassifier(n_estimators=100, random_state=42, max_depth=10)
+            else:
+                return RandomForestRegressor(n_estimators=100, random_state=42, max_depth=10)
         else:
             raise ValueError(f"Unsupported model type: {self.config.model.model_type}")
     
