@@ -14,7 +14,8 @@ dependencies = [
     "websockets",
     "PyYAML",
     "scipy",
-    "numpy"
+    "numpy",
+    "scikit-learn"
 ]
 
 [project.optional-dependencies]
@@ -38,9 +39,29 @@ notebook = [
     "plotly",
     "scipy"
 ]
+ml = [
+    "lightgbm",
+    "catboost",
+    "xgboost",
+    "scikit-learn"
+]
+strategy = [
+    "lightgbm",
+    "catboost",
+    "scikit-learn",
+    "PyYAML"
+]
+dev = [
+    "pytest",
+    "black",
+    "flake8",
+    "mypy",
+    "jupyter",
+    "matplotlib"
+]
 
 [tool.uv]
 # uv-specific config can go here
 
 [tool.setuptools.packages.find]
-include = ["quant_strategies*", "stochastic*", "pde*"] 
+include = ["quant_strategies*", "stochastic*", "pde*", "strategy*"] 
