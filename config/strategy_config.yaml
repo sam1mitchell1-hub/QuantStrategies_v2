@@ -1,0 +1,103 @@
+# Options Trading Strategy Configuration
+strategy_name: "OptionsSpreadStrategy"
+version: "1.0.0"
+description: "ML-driven options spread trading strategy using FD pricing"
+
+# Market Configuration
+market:
+  trading_horizon_days: 5
+  decision_time: "15:30:00"
+  underlyings: ["SPY", "QQQ", "IWM"]
+  min_days_to_expiry: 3
+  max_days_to_expiry: 30
+  preferred_expiry_days: [7, 14, 21, 28]
+  strike_range_pct: 0.15
+  strike_spacing_pct: 0.01
+  min_open_interest: 1000
+  max_bid_ask_spread_pct: 0.05
+
+# Feature Engineering Configuration
+features:
+  realized_vol_windows: [5, 10, 20, 60]
+  bipower_variation_window: 20
+  jump_detection_threshold: 3.0
+  iv_surface_points: 50
+  iv_skew_strikes: [0.9, 0.95, 1.0, 1.05, 1.1]
+  iv_term_structure_tenors: [7, 14, 30, 60, 90]
+  vix_features: true
+  credit_features: true
+  rates_features: true
+  volume_zscore_window: 20
+  volume_percentile_window: 60
+  rv_percentile_windows: [20, 60, 252]
+  regime_thresholds:
+    low_vol: 0.25
+    high_vol: 0.75
+    extreme_vol: 0.90
+
+# Model Configuration
+model:
+  model_type: "lightgbm"
+  objective: "classification"
+  lightgbm_params:
+    objective: "binary"
+    metric: "binary_logloss"
+    boosting_type: "gbdt"
+    num_leaves: 31
+    learning_rate: 0.05
+    feature_fraction: 0.9
+    bagging_fraction: 0.8
+    bagging_freq: 5
+    verbose: -1
+    random_state: 42
+  cv_folds: 5
+  cv_embargo_days: 5
+  walk_forward_window: 252
+  calibration_method: "platt"
+  calibration_cv_folds: 3
+
+# Structure Configuration
+structure:
+  bull_call_spread_width_pct: 0.03
+  bear_put_spread_width_pct: 0.03
+  atm_strike_tolerance_pct: 0.01
+  band_coefficient_range: [0.8, 1.2]
+  min_forecast_sharpe: 0.3
+  max_forecast_sharpe: 2.0
+
+# Pricing Configuration
+pricing:
+  fd_solver: "crank_nicolson"
+  fd_grid_points: 200
+  fd_time_steps: 200
+  fd_s_max_multiple: 4.0
+  iv_surface_model: "svi"
+  iv_smoothing_factor: 0.1
+  greeks_perturbation_pct: 0.01
+  greeks_time_perturbation: 0.01
+
+# Risk Management Configuration
+risk:
+  max_position_size_pct: 0.01
+  kelly_fraction: 0.25
+  max_kelly_fraction: 0.5
+  max_delta_exposure: 0.1
+  max_gamma_exposure: 0.05
+  max_theta_exposure: 0.02
+  max_vega_exposure: 0.1
+  max_loss_per_trade: 0.005
+  max_daily_loss: 0.02
+  max_drawdown: 0.05
+  min_expected_value: 0.001
+
+# Execution Configuration
+execution:
+  commission_per_contract: 0.65
+  exchange_fees_per_contract: 0.10
+  slippage_bps: 2.0
+  max_order_size: 100
+  order_timeout_seconds: 30
+  fill_ratio_threshold: 0.8
+  pre_trade_checks: true
+  real_time_monitoring: true
+  auto_hedge_delta: false
