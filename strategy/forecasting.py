@@ -21,14 +21,18 @@ try:
     LIGHTGBM_AVAILABLE = True
 except ImportError:
     LIGHTGBM_AVAILABLE = False
-    print("LightGBM not available. Install with: pip install lightgbm")
+except Exception as e:
+    LIGHTGBM_AVAILABLE = False
+    print(f"LightGBM not available: {e}")
 
 try:
     import catboost as cb
     CATBOOST_AVAILABLE = True
 except ImportError:
     CATBOOST_AVAILABLE = False
-    print("CatBoost not available. Install with: pip install catboost")
+except Exception as e:
+    CATBOOST_AVAILABLE = False
+    print(f"CatBoost not available: {e}")
 
 try:
     from sklearn.calibration import CalibratedClassifierCV
