@@ -229,7 +229,7 @@ class SampleFTSEProvider:
         
         # Apply filters
         df['rel_spread'] = (df['ask'] - df['bid']) / df['mid']
-        df['days_to_expiry'] = (df['expiry'].dt.date - pd.to_datetime(date).date()).dt.days
+        df['days_to_expiry'] = (df['expiry'] - pd.to_datetime(date)).dt.days
         
         # Filter by maturity bounds
         maturity_mask = (df['days_to_expiry'] >= min_days) & (df['days_to_expiry'] <= max_days)
