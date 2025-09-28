@@ -25,6 +25,12 @@ try:
 except ImportError:
     YAHOO_AVAILABLE = False
 
+try:
+    from .alpha_vantage_ftse import AlphaVantageFTSEProvider, IndexSnapshot as AlphaVantageIndexSnapshot
+    ALPHA_VANTAGE_AVAILABLE = True
+except ImportError:
+    ALPHA_VANTAGE_AVAILABLE = False
+
 # Set up logging
 logger = logging.getLogger(__name__)
 
@@ -81,7 +87,19 @@ class FTSEDataManager:
     
     def _initialize_providers(self):
         """Initialize available data providers."""
-        # Try Intrinio first
+        # Try Alpha Vantage first (most reliable for FTSE 100)
+        if ALPHA_VANTAGE_AVAILABLE and self.preferred_provider in ["alpha_vantage", "auto"]:
+            try:
+                alpha_vantage_key = os.getenv('ALPHA_VANTAGE_API_KEY')
+                if alpha_vantage_key:
+                    self.providers['alpha_vantage'] = AlphaVantageFTSEProvider(alpha_vantage_key)
+                    logger.info("Alpha Vantage provider initialized")
+                else:
+                    logger.warning("Alpha Vantage API key not found")
+            except Exception as e:
+                logger.warning(f"Failed to initialize Alpha Vantage provider: {e}")
+        
+        # Try Intrinio second
         if INTRINIO_AVAILABLE and self.preferred_provider in ["intrinio", "auto"]:
             try:
                 intrinio_key = os.getenv('INTRINIO_API_KEY')
@@ -93,7 +111,7 @@ class FTSEDataManager:
             except Exception as e:
                 logger.warning(f"Failed to initialize Intrinio provider: {e}")
         
-        # Initialize Yahoo Finance
+        # Initialize Yahoo Finance as fallback
         if YAHOO_AVAILABLE and self.preferred_provider in ["yahoo", "auto"]:
             try:
                 self.providers['yahoo'] = YahooFTSEProvider()
@@ -120,12 +138,14 @@ class FTSEDataManager:
         
         # Try providers in order of preference
         provider_order = []
-        if self.preferred_provider == "intrinio":
-            provider_order = ["intrinio", "yahoo"]
+        if self.preferred_provider == "alpha_vantage":
+            provider_order = ["alpha_vantage", "intrinio", "yahoo"]
+        elif self.preferred_provider == "intrinio":
+            provider_order = ["intrinio", "alpha_vantage", "yahoo"]
         elif self.preferred_provider == "yahoo":
-            provider_order = ["yahoo", "intrinio"]
+            provider_order = ["yahoo", "alpha_vantage", "intrinio"]
         else:  # auto
-            provider_order = ["intrinio", "yahoo"]
+            provider_order = ["alpha_vantage", "intrinio", "yahoo"]
         
         for provider_name in provider_order:
             if provider_name in self.providers and self._test_provider(provider_name):
