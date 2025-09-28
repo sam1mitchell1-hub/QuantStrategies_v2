@@ -101,7 +101,8 @@ class BlackScholesSolver(PDESolver):
                  option_type: str,
                  N_S: int,
                  N_T: int,
-                 name: str = "Black-Scholes Solver"):
+                 name: str = "Black-Scholes Solver",
+                 q: float = 0.0):
         """
         Initialize the Black-Scholes solver.
         
@@ -116,6 +117,7 @@ class BlackScholesSolver(PDESolver):
             N_S: Number of spatial grid points
             N_T: Number of time steps
             name: Solver name
+            q: Continuous dividend/borrow yield
         """
         super().__init__(name)
         
@@ -132,6 +134,7 @@ class BlackScholesSolver(PDESolver):
         self.option_type = option_type.lower()
         self.N_S = N_S
         self.N_T = N_T
+        self.q = q
         
         # Initialize grids
         self.S_grid = None
@@ -198,8 +201,9 @@ class BlackScholesSolver(PDESolver):
             Boundary value at S→∞
         """
         if self.option_type == 'call':
-            # For large S, call option value ≈ S - K*exp(-r*(T-t))
-            return self.S_max - self.K * np.exp(-self.r * (self.T - t))
+            # For large S, call option value ≈ S*exp(-q*(T-t)) - K*exp(-r*(T-t))
+            tau = self.T - t
+            return self.S_max * np.exp(-self.q * tau) - self.K * np.exp(-self.r * tau)
         else:  # put
             return 0.0
     

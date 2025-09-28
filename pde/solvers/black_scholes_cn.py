@@ -16,8 +16,8 @@ class BlackScholesCNSolver(BlackScholesSolver):
     """
     Crank-Nicolson solver for the Black-Scholes PDE in log-space.
     
-    The Black-Scholes PDE in log-space (x = ln(S)) is:
-    ∂V/∂t + ½σ²(∂²V/∂x²) + (r - ½σ²)(∂V/∂x) - rV = 0
+    The Black-Scholes PDE in log-space (x = ln(S)) with dividend yield is:
+    ∂V/∂t + ½σ²(∂²V/∂x²) + (r - q - ½σ²)(∂V/∂x) - rV = 0
     
     This solver uses the Crank-Nicolson scheme for good stability and accuracy.
     """
@@ -31,7 +31,8 @@ class BlackScholesCNSolver(BlackScholesSolver):
                  K: float = 100.0,
                  option_type: str = 'call',
                  N_S: int = 100,
-                 N_T: int = 100):
+                 N_T: int = 100,
+                 q: float = 0.0):
         """
         Initialize the Crank-Nicolson Black-Scholes solver.
         
@@ -45,13 +46,14 @@ class BlackScholesCNSolver(BlackScholesSolver):
             option_type: 'call' or 'put' (default: 'call')
             N_S: Number of spatial grid points (default: 100)
             N_T: Number of time steps (default: 100)
+            q: Continuous dividend/borrow yield (default: 0.0)
         """
         # Set default S_max if not provided
         if S_max is None:
             S_max = 4 * K
             
         super().__init__(S_min, S_max, T, r, sigma, K, option_type, N_S, N_T, 
-                        "Black-Scholes Crank-Nicolson Solver")
+                        "Black-Scholes Crank-Nicolson Solver", q)
         
         # Crank-Nicolson specific parameters
         self.theta = 0.5  # Crank-Nicolson parameter
@@ -108,11 +110,11 @@ class BlackScholesCNSolver(BlackScholesSolver):
             Tuple of (a, b, c) coefficients for the tridiagonal system
         """
         # Crank-Nicolson coefficients in log-space
-        # The PDE is: ∂V/∂t + ½σ²(∂²V/∂x²) + (r - ½σ²)(∂V/∂x) - rV = 0
+        # The PDE is: ∂V/∂t + ½σ²(∂²V/∂x²) + (r - q - ½σ²)(∂V/∂x) - rV = 0
         
         # Spatial derivatives coefficients
         alpha = 0.5 * self.sigma**2 / (self.dx**2)
-        beta = (self.r - 0.5 * self.sigma**2) / (2 * self.dx)
+        beta = (self.r - self.q - 0.5 * self.sigma**2) / (2 * self.dx)
         gamma = self.r
         
         # Crank-Nicolson coefficients
@@ -144,7 +146,7 @@ class BlackScholesCNSolver(BlackScholesSolver):
         """
         # Spatial derivatives coefficients
         alpha = 0.5 * self.sigma**2 / (self.dx**2)
-        beta = (self.r - 0.5 * self.sigma**2) / (2 * self.dx)
+        beta = (self.r - self.q - 0.5 * self.sigma**2) / (2 * self.dx)
         gamma = self.r
         
         # Initialize RHS

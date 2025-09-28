@@ -7,12 +7,12 @@ few time steps to improve accuracy near the payoff discontinuity.
 
 import numpy as np
 from typing import Dict, Any
-from .base import BlackScholesSolver
+from .black_scholes_cn import BlackScholesCNSolver
 from ..utils.grid_utils import create_log_grid, create_time_grid
 from ..utils.matrix_utils import thomas_algorithm
 
 
-class BlackScholesCNRannacherSolver(BlackScholesSolver):
+class BlackScholesCNRannacherSolver(BlackScholesCNSolver):
     """
     Crank-Nicolson solver with Rannacher smoothing for the Black-Scholes PDE.
     
@@ -31,7 +31,8 @@ class BlackScholesCNRannacherSolver(BlackScholesSolver):
                  option_type: str = 'call',
                  N_S: int = 100,
                  N_T: int = 100,
-                 rannacher_steps: int = 4):
+                 rannacher_steps: int = 4,
+                 q: float = 0.0):
         """
         Initialize the Crank-Nicolson solver with Rannacher smoothing.
         
@@ -46,13 +47,13 @@ class BlackScholesCNRannacherSolver(BlackScholesSolver):
             N_S: Number of spatial grid points (default: 100)
             N_T: Number of time steps (default: 100)
             rannacher_steps: Number of Rannacher smoothing steps (default: 4)
+            q: Continuous dividend/borrow yield (default: 0.0)
         """
         # Set default S_max if not provided
         if S_max is None:
             S_max = 4 * K
             
-        super().__init__(S_min, S_max, T, r, sigma, K, option_type, N_S, N_T, 
-                        "Black-Scholes Crank-Nicolson with Rannacher Smoothing")
+        super().__init__(S_min, S_max, T, r, sigma, K, option_type, N_S, N_T, q)
         
         # Rannacher smoothing parameters
         self.rannacher_steps = rannacher_steps
