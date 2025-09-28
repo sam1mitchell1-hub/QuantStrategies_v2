@@ -15,7 +15,8 @@ dependencies = [
     "PyYAML",
     "scipy",
     "numpy",
-    "scikit-learn"
+    "scikit-learn",
+    "pytz"
 ]
 
 [project.optional-dependencies]
@@ -64,4 +65,4 @@ dev = [
 # uv-specific config can go here
 
 [tool.setuptools.packages.find]
-include = ["quant_strategies*", "stochastic*", "pde*", "strategy*"] 
+include = ["quant_strategies*", "stochastic*", "pde*", "strategy*", "data_providers*"] 
