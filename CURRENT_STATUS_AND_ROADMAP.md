@@ -403,4 +403,397 @@ pip install scipy scikit-learn plotly
 
 ---
 
+## 🇺🇸 **AMERICAN OPTIONS ADAPTATION ROADMAP**
+
+### **Current Limitation: European-Only Framework**
+The current framework is designed for **European options** (exercise only at expiry). To support **American options** (early exercise allowed), significant modifications are required across multiple components.
+
+---
+
+### **🚧 CRITICAL CHANGES REQUIRED FOR AMERICAN OPTIONS**
+
+#### **1. Finite Difference Solver Enhancement**
+
+##### **1.1 Early Exercise Boundary Conditions**
+```
+File: pde/solvers/black_scholes_american.py
+Purpose: Implement American options FD solver with early exercise
+```
+
+**Required Modifications:**
+- **Free Boundary Problem**: The exercise boundary is unknown and must be solved simultaneously
+- **Complementarity Formulation**: V(S,t) ≥ max(S-K, 0) with equality at exercise boundary
+- **Iterative Solution**: Solve for both option value and exercise boundary
+- **Penalty Methods**: Alternative approach using penalty functions
+
+**Key Implementation:**
+```python
+class BlackScholesAmericanSolver(BlackScholesCNSolver):
+    def solve_american_option(self) -> None:
+        """Solve American option with early exercise boundary."""
+        # Implement LCP (Linear Complementarity Problem) solver
+        # or penalty method for early exercise
+        pass
+    
+    def find_exercise_boundary(self) -> np.ndarray:
+        """Find the critical stock price for early exercise at each time."""
+        # Solve for S*(t) where V(S*(t), t) = S*(t) - K
+        pass
+```
+
+##### **1.2 Numerical Methods for American Options**
+**Current**: Crank-Nicolson for European options  
+**Needed**: Advanced methods for American options
+
+**Method Options:**
+- **Projected SOR (Successive Over-Relaxation)**: Most common for LCP
+- **Penalty Methods**: Convert to unconstrained optimization
+- **Front-Fixing Methods**: Transform to fixed domain
+- **Monte Carlo with Exercise Policy**: Least squares Monte Carlo (LSM)
+
+#### **2. IV Surface Construction for American Options**
+
+##### **2.1 Forward Price vs Spot Price**
+```
+File: strategy/pricing/american_iv_surface.py
+Purpose: Build IV surfaces using forward prices for American options
+```
+
+**Critical Change**: American options are priced using **forward prices**, not spot prices
+
+**Required Modifications:**
+- **Forward Price Calculation**: F = S * exp((r - q) * T)
+- **Dividend Yield Integration**: q parameter for continuous dividends
+- **Interest Rate Term Structure**: r(t) for different maturities
+- **IV Surface Adjustment**: Convert spot IV to forward IV
+
+**Implementation:**
+```python
+def calculate_forward_price(spot: float, rate: float, dividend_yield: float, time_to_expiry: float) -> float:
+    """Calculate forward price for American options pricing."""
+    return spot * np.exp((rate - dividend_yield) * time_to_expiry)
+
+def convert_spot_iv_to_forward_iv(spot_iv: float, spot: float, forward: float) -> float:
+    """Convert spot IV to forward IV for American options."""
+    return spot_iv * (spot / forward)
+```
+
+##### **2.2 American Options IV Surface Builder**
+```
+File: strategy/pricing/american_iv_surface_builder.py
+Purpose: Build arbitrage-free IV surfaces for American options
+```
+
+**Key Differences from European:**
+- **Early Exercise Premium**: IV includes early exercise value
+- **Time Value Decomposition**: Separate intrinsic and time value
+- **Exercise Boundary Impact**: IV changes near exercise boundary
+- **Put-Call Parity Violations**: American puts can violate put-call parity
+
+**Required Components:**
+```python
+class AmericanIVSurfaceBuilder:
+    def build_forward_iv_surface(self, options_data: pd.DataFrame) -> IVSurface
+    def calculate_early_exercise_premium(self, option_price: float, intrinsic_value: float) -> float
+    def adjust_iv_for_early_exercise(self, iv: float, moneyness: float, time_to_expiry: float) -> float
+    def validate_american_arbitrage_conditions(self, surface: IVSurface) -> List[ArbitrageAlert]
+```
+
+#### **3. Pricing Model Enhancements**
+
+##### **3.1 American Options Pricing Framework**
+```
+File: strategy/pricing/american_pricing.py
+Purpose: Comprehensive American options pricing system
+```
+
+**Required Models:**
+- **Binomial Tree**: Exact American options pricing
+- **Trinomial Tree**: More efficient than binomial
+- **Finite Difference**: LCP formulation
+- **Monte Carlo**: LSM for path-dependent options
+
+**Implementation Strategy:**
+```python
+class AmericanOptionsPricer:
+    def __init__(self, method: str = 'binomial'):
+        self.method = method  # 'binomial', 'trinomial', 'fd', 'monte_carlo'
+    
+    def price_american_call(self, S: float, K: float, T: float, r: float, 
+                           sigma: float, q: float = 0.0) -> float:
+        """Price American call option."""
+        if self.method == 'binomial':
+            return self._binomial_american_call(S, K, T, r, sigma, q)
+        elif self.method == 'fd':
+            return self._fd_american_call(S, K, T, r, sigma, q)
+        # ... other methods
+    
+    def price_american_put(self, S: float, K: float, T: float, r: float, 
+                          sigma: float, q: float = 0.0) -> float:
+        """Price American put option."""
+        # Similar implementation for puts
+```
+
+##### **3.2 Greeks for American Options**
+**Additional Complexity**: Greeks change due to early exercise
+
+**Required Modifications:**
+- **Delta**: Discontinuous at exercise boundary
+- **Gamma**: Infinite at exercise boundary
+- **Theta**: Different time decay due to early exercise
+- **Vega**: Modified due to exercise boundary movement
+
+#### **4. Data Requirements for American Options**
+
+##### **4.1 Market Data Enhancements**
+```
+File: data_providers/american_options_data.py
+Purpose: Enhanced data provider for American options
+```
+
+**Additional Data Fields Required:**
+- **Exercise Style**: American vs European identification
+- **Dividend Information**: Ex-dividend dates, dividend amounts
+- **Interest Rate Curve**: Term structure for forward pricing
+- **Early Exercise Activity**: Historical early exercise patterns
+- **Liquidity Metrics**: Bid-ask spreads, open interest, volume
+
+**Data Sources:**
+- **CBOE**: US equity options (primarily American)
+- **OPRA**: Real-time US options data
+- **Interactive Brokers**: American options data
+- **Bloomberg/Refinitiv**: Professional data feeds
+
+##### **4.2 Dividend Handling**
+```
+File: strategy/pricing/dividend_handler.py
+Purpose: Handle dividend payments for American options
+```
+
+**Critical for American Options**: Dividends affect early exercise decisions
+
+**Required Components:**
+- **Dividend Calendar**: Ex-dividend dates and amounts
+- **Dividend Yield Calculation**: Continuous dividend yield
+- **Early Exercise Logic**: When to exercise before ex-dividend
+- **Forward Price Adjustment**: Adjust for known dividends
+
+#### **5. Strategy Framework Modifications**
+
+##### **5.1 American Options Strategy Signals**
+```
+File: strategy/signals/american_signals.py
+Purpose: Strategy signals specific to American options
+```
+
+**New Signal Types:**
+- **Early Exercise Signals**: When to exercise early
+- **Dividend Capture Strategies**: Exercise before ex-dividend
+- **Time Value Decay**: Different from European options
+- **Exercise Boundary Analysis**: Near-the-money behavior
+
+##### **5.2 Risk Management for American Options**
+```
+File: strategy/risk/american_risk.py
+Purpose: Risk management specific to American options
+```
+
+**Additional Risk Factors:**
+- **Early Exercise Risk**: Unexpected early exercise
+- **Dividend Risk**: Ex-dividend date exposure
+- **Exercise Boundary Risk**: Rapid boundary movement
+- **Liquidity Risk**: American options can be less liquid
+
+---
+
+### **📋 AMERICAN OPTIONS IMPLEMENTATION ROADMAP**
+
+#### **Phase 1: Core Pricing Infrastructure (4-5 weeks)**
+
+##### **Week 1-2: FD Solver Enhancement**
+- [ ] **Day 1-3**: Implement LCP solver for American options
+  - Research Linear Complementarity Problem methods
+  - Implement Projected SOR algorithm
+  - Add early exercise boundary detection
+
+- [ ] **Day 4-5**: Binomial tree implementation
+  - Implement Cox-Ross-Rubinstein model
+  - Add early exercise logic
+  - Optimize for performance
+
+- [ ] **Day 6-7**: Testing and validation
+  - Compare FD vs Binomial results
+  - Validate against known American option prices
+  - Performance benchmarking
+
+##### **Week 3: Forward Pricing Framework**
+- [ ] **Day 1-2**: Forward price calculations
+  - Implement forward price formulas
+  - Add dividend yield handling
+  - Create interest rate term structure
+
+- [ ] **Day 3-4**: IV surface conversion
+  - Convert spot IV to forward IV
+  - Adjust surface for American options
+  - Validate arbitrage conditions
+
+- [ ] **Day 5**: Integration and testing
+  - Integrate with existing pricing system
+  - Test with sample data
+  - Validate forward pricing accuracy
+
+##### **Week 4-5: American Options Pricer**
+- [ ] **Day 1-3**: Comprehensive pricing system
+  - Implement multiple pricing methods
+  - Add Greeks calculation for American options
+  - Create pricing validation framework
+
+- [ ] **Day 4-5**: Performance optimization
+  - Optimize pricing algorithms
+  - Add caching and memoization
+  - Benchmark against commercial systems
+
+#### **Phase 2: Data and Market Integration (3-4 weeks)**
+
+##### **Week 6-7: American Options Data Provider**
+- [ ] **Day 1-2**: CBOE/OPRA integration
+  - Research US options data sources
+  - Implement data provider for American options
+  - Add real-time data streaming
+
+- [ ] **Day 3-4**: Dividend data integration
+  - Implement dividend calendar system
+  - Add ex-dividend date handling
+  - Create dividend yield calculations
+
+- [ ] **Day 5**: Data quality and validation
+  - Implement data quality checks
+  - Add cross-validation with multiple sources
+  - Create data reconciliation system
+
+##### **Week 8-9: Market Microstructure**
+- [ ] **Day 1-2**: Early exercise analysis
+  - Implement early exercise pattern analysis
+  - Add exercise boundary tracking
+  - Create exercise probability models
+
+- [ ] **Day 3-4**: Liquidity analysis
+  - Add American options liquidity metrics
+  - Implement spread analysis
+  - Create market impact models
+
+- [ ] **Day 5**: Integration and testing
+  - Test with real American options data
+  - Validate market microstructure analysis
+  - Performance optimization
+
+#### **Phase 3: Strategy Enhancement (3-4 weeks)**
+
+##### **Week 10-11: American Options Strategies**
+- [ ] **Day 1-3**: Early exercise strategies
+  - Implement early exercise decision logic
+  - Add dividend capture strategies
+  - Create exercise timing models
+
+- [ ] **Day 4-5**: IV surface strategies
+  - Adapt IV strategies for American options
+  - Add forward IV analysis
+  - Implement American-specific signals
+
+##### **Week 12-13: Risk Management and Production**
+- [ ] **Day 1-3**: American options risk management
+  - Implement American-specific risk factors
+  - Add early exercise risk controls
+  - Create risk monitoring dashboards
+
+- [ ] **Day 4-5**: Production readiness
+  - Performance optimization
+  - Documentation and testing
+  - Deployment preparation
+
+---
+
+### **🎯 IMMEDIATE NEXT STEPS FOR AMERICAN OPTIONS**
+
+#### **Step 1: Research and Design (This Week)**
+- [ ] Study American options pricing literature
+- [ ] Research LCP solution methods
+- [ ] Design forward pricing framework
+- [ ] Plan data source integration
+
+#### **Step 2: Create Development Branch**
+```bash
+git checkout -b feature/american-options-support
+```
+
+#### **Step 3: Start Core Implementation**
+- [ ] Create `pde/solvers/black_scholes_american.py`
+- [ ] Implement basic LCP solver
+- [ ] Add forward price calculations
+- [ ] Test with simple American options
+
+---
+
+### **📊 AMERICAN OPTIONS SUCCESS METRICS**
+
+#### **Pricing Accuracy**
+- [ ] FD vs Binomial agreement: < 0.1% difference
+- [ ] Market price accuracy: < 0.5% error
+- [ ] Early exercise boundary accuracy: < 1% error
+- [ ] Greeks accuracy: < 1% error vs analytical
+
+#### **Performance Metrics**
+- [ ] Pricing speed: < 10ms per option
+- [ ] Surface construction: < 1 second
+- [ ] Real-time data processing: < 100ms latency
+- [ ] System uptime: > 99.9%
+
+#### **Strategy Performance**
+- [ ] Early exercise decision accuracy: > 80%
+- [ ] Dividend capture success: > 70%
+- [ ] Risk-adjusted returns: Sharpe > 1.5
+- [ ] Maximum drawdown: < 10%
+
+---
+
+### **🚨 CRITICAL DEPENDENCIES FOR AMERICAN OPTIONS**
+
+#### **Data Sources**
+- **CBOE/OPRA**: US equity options data
+- **Dividend Data**: Ex-dividend dates and amounts
+- **Interest Rate Data**: Term structure for forward pricing
+- **Real-time Feeds**: Live options data and early exercise activity
+
+#### **Computational Requirements**
+- **Memory**: 16GB+ for LCP solvers
+- **CPU**: High-performance multi-core for iterative methods
+- **Storage**: 500GB+ for American options data
+- **Network**: Low-latency for real-time data
+
+#### **Mathematical Libraries**
+- **Optimization**: SciPy, CVXPY for LCP solving
+- **Numerical Methods**: Advanced FD methods
+- **Statistics**: Monte Carlo and stochastic methods
+
+---
+
+### **💡 KEY DIFFERENCES: EUROPEAN vs AMERICAN OPTIONS**
+
+| **Aspect** | **European Options** | **American Options** |
+|------------|---------------------|---------------------|
+| **Exercise** | Only at expiry | Anytime before expiry |
+| **Pricing** | Spot price based | Forward price based |
+| **FD Solver** | Standard CN | LCP formulation |
+| **IV Surface** | Spot IV | Forward IV |
+| **Greeks** | Continuous | Discontinuous at boundary |
+| **Dividends** | Simple adjustment | Complex early exercise logic |
+| **Data** | European exchanges | US exchanges (CBOE) |
+| **Complexity** | Moderate | High |
+
+---
+
+*The American options adaptation represents a significant technical challenge but would make the framework applicable to the largest options market in the world (US equity options).*
+
+---
+
 *This roadmap assumes you have access to professional data sources. If not, we can adapt the timeline to focus on sample data development first.*
