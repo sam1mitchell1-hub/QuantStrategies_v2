@@ -92,10 +92,10 @@ class TestBlackScholesCNSolver:
         assert solver.S_grid is not None
         assert solver.t_grid is not None
         assert solver.x_grid is not None
-        assert len(solver.S_grid) == 50
+        assert len(solver.S_grid) == 51  # N_S + 1 (including boundaries)
         assert len(solver.t_grid) == 26  # N_T + 1
-        assert len(solver.x_grid) == 50
-        assert solver.solution.shape == (26, 50)
+        assert len(solver.x_grid) == 51  # N_S + 1 (including boundaries)
+        assert solver.solution.shape == (26, 51)  # (N_T+1, N_S+1)
         
     def test_payoff_function(self):
         """Test payoff function calculation."""
@@ -142,7 +142,7 @@ class TestBlackScholesCNSolver:
         solution = solver.solve()
         
         assert solver.solved
-        assert solution.shape == (11, 20)  # (N_T+1, N_S)
+        assert solution.shape == (11, 21)  # (N_T+1, N_S+1)
         assert np.all(np.isfinite(solution))
         
     def test_solution_properties(self):
@@ -212,9 +212,9 @@ class TestBlackScholesCNSolver:
         assert 't_grid' in surface
         assert 'solution' in surface
         
-        assert len(surface['S_grid']) == 20
-        assert len(surface['t_grid']) == 11
-        assert surface['solution'].shape == (11, 20)
+        assert len(surface['S_grid']) == 21  # N_S + 1
+        assert len(surface['t_grid']) == 11  # N_T + 1
+        assert surface['solution'].shape == (11, 21)  # (N_T+1, N_S+1)
         
     def test_put_call_parity(self):
         """Test put-call parity relationship."""

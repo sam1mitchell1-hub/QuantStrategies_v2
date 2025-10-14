@@ -1,7 +1,10 @@
 from abc import ABC, abstractmethod
 import pandas as pd
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, TYPE_CHECKING
 from enum import Enum
+
+if TYPE_CHECKING:
+    from ..execution.models import Signal
 
 class SignalType(Enum):
     BUY = "BUY"
@@ -24,8 +27,8 @@ class BaseStrategy(ABC):
         """
         self.name = name
         self.parameters = parameters or {}
-        self.positions = {}  # Track current positions
-        self.signals = []    # Track all signals generated
+        self.signals = []    # Track all signals generated (for backtesting)
+        # Note: positions are now managed by Portfolio class in live trading
         
     @abstractmethod
     def calculate_indicators(self, data: pd.DataFrame) -> pd.DataFrame:
@@ -123,4 +126,44 @@ class BaseStrategy(ABC):
             print(f"Missing required columns: {missing_columns}")
             return False
         
-        return True 
+        return True
+    
+    def emit_signal(self, ticker: str, signal_type: SignalType, 
+                   strength: float = 1.0) -> 'Signal':
+        """
+        Emit a trading signal for OMS processing.
+        
+        This method creates a Signal object that can be sent to the
+        Order Management System for execution.
+        
+        Args:
+            ticker: Stock ticker symbol
+            signal_type: BUY, SELL, or HOLD
+            strength: Signal strength/confidence (0.0 to 1.0)
+            
+        Returns:
+            Signal object ready for OMS processing
+        """
+        from ..execution.models import Signal as OMSSignal, SignalType as OMSSignalType
+        
+        # Convert strategy SignalType to OMS SignalType
+        if signal_type == SignalType.BUY:
+            oms_signal_type = OMSSignalType.BUY
+        elif signal_type == SignalType.SELL:
+            oms_signal_type = OMSSignalType.SELL
+        else:
+            # HOLD signals are not actionable
+            raise ValueError(f"Cannot emit HOLD signal - only BUY or SELL allowed")
+        
+        # Create OMS signal
+        signal = OMSSignal.create(
+            strategy_name=self.name,
+            ticker=ticker,
+            signal_type=oms_signal_type,
+            strength=strength
+        )
+        
+        # Track for backtesting purposes
+        self.signals.append(signal)
+        
+        return signal

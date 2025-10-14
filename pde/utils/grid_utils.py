@@ -22,10 +22,10 @@ def create_log_grid(S_min: float, S_max: float, N_S: int) -> Tuple[np.ndarray, n
     if S_min <= 0:
         S_min = 1e-10  # Very small positive value
     
-    # Create log-space grid
+    # Create log-space grid with N_S+1 points (including boundaries)
     x_min = np.log(S_min)
     x_max = np.log(S_max)
-    x_grid = np.linspace(x_min, x_max, N_S)
+    x_grid = np.linspace(x_min, x_max, N_S + 1)
     
     # Convert back to S-space
     S_grid = np.exp(x_grid)
