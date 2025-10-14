@@ -223,6 +223,7 @@ class Portfolio:
                 'ticker': ticker,
                 'quantity': pos.quantity,
                 'avg_cost': pos.avg_cost,
+                'current_price': current_prices.get(ticker, 0.0),
                 'market_value': pos.market_value,
                 'unrealized_pnl': pos.unrealized_pnl,
                 'pnl_pct': (pos.unrealized_pnl / (pos.quantity * pos.avg_cost) * 100) if pos.quantity != 0 else 0
@@ -265,14 +266,15 @@ class Portfolio:
         print(f"Total P&L:         ${summary['total_pnl']:>15,.2f} ({summary['total_return_pct']:>6.2f}%)")
         
         if summary['positions']:
-            print("-"*60)
+            print("-"*75)
             print("POSITIONS:")
-            print(f"{'Ticker':<8} {'Qty':>8} {'Avg Cost':>12} {'Mkt Value':>14} {'P&L':>14} {'P&L %':>10}")
-            print("-"*60)
+            print(f"{'Ticker':<8} {'Qty':>8} {'Avg Cost':>11} {'Curr Price':>11} {'Mkt Value':>13} {'P&L':>13} {'P&L %':>9}")
+            print("-"*75)
             for pos in summary['positions']:
                 print(f"{pos['ticker']:<8} {pos['quantity']:>8} "
-                      f"${pos['avg_cost']:>11,.2f} ${pos['market_value']:>13,.2f} "
-                      f"${pos['unrealized_pnl']:>13,.2f} {pos['pnl_pct']:>9.2f}%")
+                      f"${pos['avg_cost']:>10,.2f} ${pos['current_price']:>10,.2f} "
+                      f"${pos['market_value']:>12,.2f} "
+                      f"${pos['unrealized_pnl']:>12,.2f} {pos['pnl_pct']:>8.2f}%")
         
-        print("="*60 + "\n")
+        print("="*75 + "\n")
 
