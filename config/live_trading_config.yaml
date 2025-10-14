@@ -1,0 +1,63 @@
+# Live Trading Configuration
+
+# Watchlist of liquid stocks to monitor
+watchlist:
+  - AAPL
+  - MSFT
+  - GOOGL
+  - TSLA
+  - AMZN
+  - META
+  - NVDA
+  - JPM
+  - V
+  - WMT
+
+# Trading schedule settings
+schedule:
+  trading_interval_minutes: 5  # Check signals every 5 minutes
+  market_hours_only: true      # Only trade during market hours
+  start_time: "09:30"          # Market open (ET)
+  end_time: "16:00"            # Market close (ET)
+  timezone: "America/New_York"
+
+# Data fetching settings
+data:
+  historical_period: "1y"       # Period for historical data
+  bars_for_indicators: 100      # Number of bars to use for indicators
+  cache_duration_seconds: 60    # Cache price data for 60 seconds
+  data_interval: "1d"           # Daily bars for strategies
+
+# Portfolio settings
+portfolio:
+  initial_cash: 100000          # Starting capital
+  max_positions: 10             # Maximum number of concurrent positions
+
+# Strategy settings
+strategy:
+  name: "BollingerRSI"          # Strategy to use
+  parameters:
+    bb_period: 20
+    bb_std: 2
+    rsi_period: 14
+    rsi_oversold: 30
+    rsi_overbought: 70
+    volume_multiplier: 1.5
+
+# Risk management
+risk:
+  max_position_size_pct: 0.10   # Max 10% per position
+  min_cash_buffer_pct: 0.20     # Keep 20% cash buffer
+
+# Execution settings
+execution:
+  commission_per_share: 0.005   # Commission per share
+  min_commission: 1.00          # Minimum commission per order
+  slippage_bps: 5.0             # Slippage in basis points
+
+# Logging
+logging:
+  level: "INFO"                 # DEBUG, INFO, WARNING, ERROR
+  log_file: "logs/live_trading.log"
+  log_to_console: true
+
