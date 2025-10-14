@@ -35,6 +35,7 @@ class Portfolio:
         self.initial_cash = initial_cash
         self.cash = initial_cash
         self.positions: Dict[str, Position] = {}
+        self.realized_pnl = 0.0  # Track actual profits/losses from closed trades
         self.created_at = datetime.now()
         
         logger.info(f"Portfolio initialized with ${initial_cash:,.2f}")
@@ -118,11 +119,14 @@ class Portfolio:
                 position.update_market_value(current_prices[ticker])
                 unrealized_pnl += position.unrealized_pnl
         
-        # Realized P&L is cash change from trading (excluding initial cash)
-        realized_pnl = self.cash - self.initial_cash
+        # Get total portfolio value
+        total_value = self.get_total_value(current_prices)
         
-        # Total P&L
-        total_pnl = unrealized_pnl + realized_pnl
+        # Total P&L = current value - starting value
+        total_pnl = total_value - self.initial_cash
+        
+        # Realized P&L comes from closed trades (tracked separately)
+        realized_pnl = self.realized_pnl
         
         return unrealized_pnl, realized_pnl, total_pnl
     
@@ -177,7 +181,7 @@ class Portfolio:
         
         # Update position
         if ticker not in self.positions:
-            # Create new position
+            # Create new position (BUY)
             position = Position(
                 ticker=ticker,
                 quantity=quantity,
@@ -191,6 +195,16 @@ class Portfolio:
             # Update existing position
             position = self.positions[ticker]
             old_quantity = position.quantity
+            old_avg_cost = position.avg_cost
+            
+            # If selling (quantity negative), track realized P&L
+            if quantity < 0:
+                shares_sold = abs(quantity)
+                realized_pnl_this_trade = (price - old_avg_cost) * shares_sold
+                self.realized_pnl += realized_pnl_this_trade
+                logger.info(f"Realized P&L from sale: ${realized_pnl_this_trade:,.2f} "
+                          f"({shares_sold} shares @ ${price:.2f} vs avg ${old_avg_cost:.2f})")
+            
             position.add_shares(quantity, price)
             
             logger.info(f"Updated position: {ticker} {old_quantity} → {position.quantity} @ ${price:.2f}")
