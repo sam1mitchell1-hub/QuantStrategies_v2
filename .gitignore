@@ -31,4 +31,7 @@ quant_strategies.egg-info/
 
 # Generated output files
 output/
-*.png 
+*.png
+
+# API Keys and sensitive config
+data_providers/saxo_config.json 

@@ -1,0 +1,67 @@
+2025-10-14 18:56:46,556 - quant_strategies.execution.portfolio - INFO - Portfolio initialized with $100,000.00
+2025-10-14 18:56:46,565 - quant_strategies.execution.ledger - INFO - Ledger initialized at data/live_trading_ledger.db
+2025-10-14 18:56:46,565 - quant_strategies.execution.broker_agent - INFO - BrokerAgent initialized (SIMULATION MODE): commission=$0.005/share, min=$1.0, slippage=5.0bps
+2025-10-14 18:56:46,565 - quant_strategies.execution.sizing - INFO - PositionSizer initialized: 10% initial, 10% ongoing, buffer at 7+ positions
+2025-10-14 18:56:46,565 - quant_strategies.execution.oms - INFO - OrderManagementSystem initialized
+2025-10-14 18:56:46,565 - quant_strategies.data.live_data_fetcher - INFO - LiveDataFetcher initialized with 60s cache
+2025-10-14 18:56:46,565 - quant_strategies.strategies.live_strategy_runner - INFO - LiveStrategyRunner initialized: Bollinger_RSI_Mean_Reversion monitoring 10 tickers
+2025-10-14 18:56:46,566 - quant_strategies.strategies.live_strategy_runner - INFO - Running trading cycle for 10 tickers
+2025-10-14 18:56:46,715 - quant_strategies.data.live_data_fetcher - WARNING - No historical data for AAPL (period=1y)
+2025-10-14 18:56:46,715 - quant_strategies.strategies.live_strategy_runner - WARNING - No historical data for AAPL, skipping
+2025-10-14 18:56:46,751 - quant_strategies.data.live_data_fetcher - WARNING - No historical data for MSFT (period=1y)
+2025-10-14 18:56:46,751 - quant_strategies.strategies.live_strategy_runner - WARNING - No historical data for MSFT, skipping
+2025-10-14 18:56:46,790 - quant_strategies.data.live_data_fetcher - WARNING - No historical data for GOOGL (period=1y)
+2025-10-14 18:56:46,790 - quant_strategies.strategies.live_strategy_runner - WARNING - No historical data for GOOGL, skipping
+2025-10-14 18:56:46,831 - quant_strategies.data.live_data_fetcher - WARNING - No historical data for TSLA (period=1y)
+2025-10-14 18:56:46,831 - quant_strategies.strategies.live_strategy_runner - WARNING - No historical data for TSLA, skipping
+2025-10-14 18:56:46,870 - quant_strategies.data.live_data_fetcher - WARNING - No historical data for AMZN (period=1y)
+2025-10-14 18:56:46,870 - quant_strategies.strategies.live_strategy_runner - WARNING - No historical data for AMZN, skipping
+2025-10-14 18:56:46,909 - quant_strategies.data.live_data_fetcher - WARNING - No historical data for META (period=1y)
+2025-10-14 18:56:46,909 - quant_strategies.strategies.live_strategy_runner - WARNING - No historical data for META, skipping
+2025-10-14 18:56:46,950 - quant_strategies.data.live_data_fetcher - WARNING - No historical data for NVDA (period=1y)
+2025-10-14 18:56:46,950 - quant_strategies.strategies.live_strategy_runner - WARNING - No historical data for NVDA, skipping
+2025-10-14 18:56:46,997 - quant_strategies.data.live_data_fetcher - WARNING - No historical data for JPM (period=1y)
+2025-10-14 18:56:46,997 - quant_strategies.strategies.live_strategy_runner - WARNING - No historical data for JPM, skipping
+2025-10-14 18:56:47,042 - quant_strategies.data.live_data_fetcher - WARNING - No historical data for V (period=1y)
+2025-10-14 18:56:47,042 - quant_strategies.strategies.live_strategy_runner - WARNING - No historical data for V, skipping
+2025-10-14 18:56:47,083 - quant_strategies.data.live_data_fetcher - WARNING - No historical data for WMT (period=1y)
+2025-10-14 18:56:47,084 - quant_strategies.strategies.live_strategy_runner - WARNING - No historical data for WMT, skipping
+2025-10-14 18:56:47,084 - quant_strategies.strategies.live_strategy_runner - INFO - Cycle complete: 0 signals, 0 orders placed
+2025-10-20 17:50:37,344 - quant_strategies.execution.portfolio - INFO - Portfolio initialized with $100,000.00
+2025-10-20 17:50:37,345 - quant_strategies.execution.ledger - INFO - Ledger initialized at data/live_trading_ledger.db
+2025-10-20 17:50:37,345 - quant_strategies.execution.broker_agent - INFO - BrokerAgent initialized (SIMULATION MODE): commission=$0.005/share, min=$1.0, slippage=5.0bps
+2025-10-20 17:50:37,345 - quant_strategies.execution.sizing - INFO - PositionSizer initialized: 10% initial, 10% ongoing, buffer at 7+ positions
+2025-10-20 17:50:37,345 - quant_strategies.execution.oms - INFO - OrderManagementSystem initialized
+2025-10-20 17:50:37,345 - quant_strategies.data.live_data_fetcher - INFO - LiveDataFetcher initialized with 60s cache
+2025-10-20 17:50:37,345 - quant_strategies.strategies.live_strategy_runner - INFO - LiveStrategyRunner initialized: Bollinger_RSI_Mean_Reversion monitoring 10 tickers
+2025-10-20 17:50:37,345 - quant_strategies.strategies.live_strategy_runner - INFO - Running trading cycle for 10 tickers
+2025-10-20 17:50:37,667 - quant_strategies.data.live_data_fetcher - INFO - Fetched 250 bars of historical data for AAPL
+2025-10-20 17:50:37,908 - quant_strategies.data.live_data_fetcher - INFO - Fetched 250 bars of historical data for MSFT
+2025-10-20 17:50:38,012 - quant_strategies.data.live_data_fetcher - INFO - Fetched 250 bars of historical data for GOOGL
+2025-10-20 17:50:38,091 - quant_strategies.data.live_data_fetcher - INFO - Fetched 250 bars of historical data for TSLA
+2025-10-20 17:50:38,286 - quant_strategies.data.live_data_fetcher - INFO - Fetched 250 bars of historical data for AMZN
+2025-10-20 17:50:38,385 - quant_strategies.data.live_data_fetcher - INFO - Fetched 250 bars of historical data for META
+2025-10-20 17:50:38,521 - quant_strategies.data.live_data_fetcher - INFO - Fetched 250 bars of historical data for NVDA
+2025-10-20 17:50:38,808 - quant_strategies.data.live_data_fetcher - INFO - Fetched 250 bars of historical data for JPM
+2025-10-20 17:50:38,942 - quant_strategies.data.live_data_fetcher - INFO - Fetched 250 bars of historical data for V
+2025-10-20 17:50:39,268 - quant_strategies.data.live_data_fetcher - INFO - Fetched 250 bars of historical data for WMT
+2025-10-20 17:50:39,270 - quant_strategies.strategies.live_strategy_runner - INFO - Cycle complete: 0 signals, 0 orders placed
+2025-10-20 17:51:25,316 - quant_strategies.execution.portfolio - INFO - Portfolio initialized with $100,000.00
+2025-10-20 17:51:25,319 - quant_strategies.execution.ledger - INFO - Ledger initialized at data/live_trading_ledger.db
+2025-10-20 17:51:25,319 - quant_strategies.execution.broker_agent - INFO - BrokerAgent initialized (SIMULATION MODE): commission=$0.005/share, min=$1.0, slippage=5.0bps
+2025-10-20 17:51:25,319 - quant_strategies.execution.sizing - INFO - PositionSizer initialized: 10% initial, 10% ongoing, buffer at 7+ positions
+2025-10-20 17:51:25,319 - quant_strategies.execution.oms - INFO - OrderManagementSystem initialized
+2025-10-20 17:51:25,319 - quant_strategies.data.live_data_fetcher - INFO - LiveDataFetcher initialized with 60s cache
+2025-10-20 17:51:25,320 - quant_strategies.strategies.live_strategy_runner - INFO - LiveStrategyRunner initialized: Bollinger_RSI_Mean_Reversion monitoring 10 tickers
+2025-10-20 17:51:25,320 - quant_strategies.strategies.live_strategy_runner - INFO - Running trading cycle for 10 tickers
+2025-10-20 17:51:25,689 - quant_strategies.data.live_data_fetcher - INFO - Fetched 250 bars of historical data for AAPL
+2025-10-20 17:51:25,815 - quant_strategies.data.live_data_fetcher - INFO - Fetched 250 bars of historical data for MSFT
+2025-10-20 17:51:25,888 - quant_strategies.data.live_data_fetcher - INFO - Fetched 250 bars of historical data for GOOGL
+2025-10-20 17:51:26,035 - quant_strategies.data.live_data_fetcher - INFO - Fetched 250 bars of historical data for TSLA
+2025-10-20 17:51:26,103 - quant_strategies.data.live_data_fetcher - INFO - Fetched 250 bars of historical data for AMZN
+2025-10-20 17:51:26,179 - quant_strategies.data.live_data_fetcher - INFO - Fetched 250 bars of historical data for META
+2025-10-20 17:51:26,265 - quant_strategies.data.live_data_fetcher - INFO - Fetched 250 bars of historical data for NVDA
+2025-10-20 17:51:26,408 - quant_strategies.data.live_data_fetcher - INFO - Fetched 250 bars of historical data for JPM
+2025-10-20 17:51:26,522 - quant_strategies.data.live_data_fetcher - INFO - Fetched 250 bars of historical data for V
+2025-10-20 17:51:26,669 - quant_strategies.data.live_data_fetcher - INFO - Fetched 250 bars of historical data for WMT
+2025-10-20 17:51:26,674 - quant_strategies.strategies.live_strategy_runner - INFO - Cycle complete: 0 signals, 0 orders placed
